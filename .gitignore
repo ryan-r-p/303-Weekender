@@ -1,0 +1,3 @@
+# Ignoring the connection information for Twilio
+*.env
+.idea/
