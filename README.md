@@ -1,5 +1,5 @@
 # 303-Weekender
-_______________
+
 #### Tee time notifications for high-handicappers only
 _______________
 
@@ -45,5 +45,5 @@ This snippet can be changed to reflect your account information instead of utili
 ```
 acct_sid = 'your acct sid'
 auth_tkn = 'your account auth key'
-from_phone = 'your twilio phone num)
+from_phone = 'your twilio phone num')
 ```
