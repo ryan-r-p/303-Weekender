@@ -3,7 +3,19 @@ import pandas as pd
 from twilio.twiml.messaging_response import MessagingResponse
 import user_db
 
-pd.set_option('display.max_colwidth', None)
+
+def list_validity(ipt, valid_list):
+    if ', ' in ipt:
+        lst = ipt.split(', ')
+    else:
+        lst = ipt.split(',')
+    for i in lst:
+        if i in valid_list:
+            continue
+        else:
+            return "Fail"
+    return lst
+
 
 app = Flask(__name__)
 
@@ -18,6 +30,7 @@ def incoming_sms():
     resp = MessagingResponse()
 
     def response_and_check(bdy, phn_num, response_var):
+        # "Begin" logic
         begin_str = "Begin"
         begin_no_case = begin_str.casefold()
         bdy_no_case = bdy.casefold()
@@ -44,31 +57,69 @@ def incoming_sms():
                 elif int(phn_num[2:]) in user_list:
                     response_var.message(f"You are already subscribed to 303-Weekender. Respond with STOP to unsubscribe")
 
+        # Creating phone number index from user account table, using it for lookups
         user_acct_tbl_index = user_db.user_acct_tbl.set_index('ID')
         new_id = int(phn_num[2:])
 
-        if user_acct_tbl_index.at[new_id, 'HAS_COURSE_LIST'] == 0 and user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] == 1:
-            user_acct_tbl_index.at[new_id, 'COURSE_LIST'] = str(bdy)
-            user_acct_tbl_index.at[new_id, 'HAS_COURSE_LIST'] = 1
-            user_db.update_user_acct_table(user_acct_tbl_index)
-        if user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] == 0 and user_acct_tbl_index.at[new_id, 'FIRST_NAME'] != "":
-            user_acct_tbl_index.at[new_id, 'DAY_LIST'] = str(bdy)
-            user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] = 1
-            user_db.update_user_acct_table(user_acct_tbl_index)
+        # Getting the responses from the text, converting those responses for use in the program and rejecting responses that don't fit, storing the user information in the user account table
+        if user_acct_tbl_index.at[new_id, 'HAS_COURSE_LIST'] == 0 and user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] == 1 and bdy_no_case != begin_no_case:
+            valid_course_list = ["Aurora Golf Courses", "Broken Tee", "CommonGround", "Denver Golf Courses", "DU Golf Club", "Foothills Recreation District", "Fossil Trace", "Green Valley Ranch", "Hyland Hills", "Indian Tree", "Lakewood Golf Courses", "Raccoon Creek", "Riverdale", "Saddleback", "Thorncreek", "West Woods"]
+            course_list_valid = list_validity(str(bdy), valid_course_list)
+            if course_list_valid != "Fail":
+                user_acct_tbl_index.at[new_id, 'COURSE_LIST'] = course_list_valid
+                user_acct_tbl_index.at[new_id, 'HAS_COURSE_LIST'] = 1
+                user_db.update_user_acct_table(user_acct_tbl_index)
+            else:
+                response_var.message(f"Invalid response. One or more courses from the course list were entered incorrectly.")
+        if user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] == 0 and user_acct_tbl_index.at[new_id, 'FIRST_NAME'] != "" and bdy_no_case != begin_no_case:
+            valid_day_list = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+            day_list_valid = list_validity(str(bdy), valid_day_list)
+            if day_list_valid != "Fail":
+                user_acct_tbl_index.at[new_id, 'DAY_LIST'] = day_list_valid
+                user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] = 1
+                user_db.update_user_acct_table(user_acct_tbl_index)
+            else:
+                response_var.message(f"Invalid response. Please ensure you are entering the day of the week with proper capitalization.")
         if user_acct_tbl_index.at[new_id, 'FIRST_NAME'] == "" and bdy_no_case != begin_no_case:
             user_acct_tbl_index.at[new_id, 'FIRST_NAME'] = str(bdy)
             user_db.update_user_acct_table(user_acct_tbl_index)
 
+        # Sending the prompts to the user once tasks have been completed
         if user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] == 1 and user_acct_tbl_index.at[new_id, 'HAS_COURSE_LIST'] == 0:
-            response_var.message(f"Blah blah blah: here's the course list and a couple newlines\n"
-                                 f"\n"
-                                 f"Tee-hee")
+            response_var.message(f"From the following list, enter the courses that you would like to receive SMS notifications for, separated by commas, when tee times go live:")
+            response_var.message(f"(Please ensure exact spelling as seen here within the following prompts)")
+            response_var.message(f"Aurora Golf Courses\n"
+                                 f"Broken Tee\n"
+                                 f"CommonGround\n"
+                                 f"Denver Golf Courses\n"
+                                 f"DU Golf Club\n"
+                                 f"Foothills Recreation District\n"
+                                 f"Fossil Trace\n"
+                                 f"Green Valley Ranch\n"
+                                 f"Hyland Hills\n"
+                                 f"Indian Tree\n"
+                                 f"Lakewood Golf Courses\n"
+                                 f"Raccoon Creek\n"
+                                 f"Riverdale\n"
+                                 f"Saddleback\n"
+                                 f"Thorncreek\n"
+                                 f"West Woods")
         if user_acct_tbl_index.at[new_id, 'FIRST_NAME'] != "" and user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] == 0:
             response_var.message(f"Hi {user_acct_tbl_index.at[new_id, 'FIRST_NAME']}, provide the days of the week you want tee times on, separated by commas. You can select up to four days.\n"
                                  f"\n"
                                  f'(ex. "Friday, Sunday")')
         if user_acct_tbl_index.at[new_id, 'FIRST_NAME'] == "":
             response_var.message(f"What is your first name?")
+
+        # Sending subscription notification
+        if user_acct_tbl_index.at[new_id, 'FIRST_NAME'] != "" and user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] == 1 and user_acct_tbl_index.at[new_id, 'HAS_COURSE_LIST'] == 1:
+            if user_acct_tbl_index.at[new_id, 'ACTIVE'] == 0:
+                response_var.message(f'Congrats. You are now subscribed to 303-Weekender.\n'
+                                     f'\n'
+                                     f"-Respond 'config' to change your notification settings'\n"
+                                     f"Respond 'unsubscribe' to unsubscribe")
+            user_acct_tbl_index.at[new_id, 'ACTIVE'] = 1
+            user_db.update_user_acct_table(user_acct_tbl_index)
         print(user_db.user_acct_tbl.to_string())
 
     response_and_check(body, phone_num, resp)
