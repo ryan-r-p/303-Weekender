@@ -4,9 +4,6 @@ import time
 import datetime
 import arrow
 from dotenv import load_dotenv
-import flask_app
-
-flask_app.app()
 
 load_dotenv('twilio.env')
 acct_sid = os.getenv('TWILIO_ACCOUNT_SID')
