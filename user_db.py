@@ -7,3 +7,12 @@ def update_user_acct_table(user_account_tbl_w_indexes):
     global user_acct_tbl
     user_account_tbl_w_indexes = user_account_tbl_w_indexes.reset_index()
     user_acct_tbl = user_account_tbl_w_indexes
+
+
+def user_unsub(phn_id):
+    global user_acct_tbl
+    i = user_acct_tbl.set_index('ID')
+    i = i.drop(phn_id)
+    i.reset_index(inplace=True)
+    user_acct_tbl = i
+

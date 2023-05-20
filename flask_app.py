@@ -92,16 +92,16 @@ def incoming_sms():
                     user_acct_tbl_index.at[new_id, 'HAS_COURSE_LIST'] = 1
                     user_db.update_user_acct_table(user_acct_tbl_index)
                 else:
-                    response_var.message(f"Invalid response. One or more courses from the course list were entered incorrectly.")
+                    response_var.message(f"Invalid response. One or more courses from the course list were entered incorrectly")
             if user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] == 0 and user_acct_tbl_index.at[new_id, 'FIRST_NAME'] != "" and bdy_no_case != begin_no_case and bdy_no_case != config_str:
                 valid_day_list = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
                 day_list_valid = list_validity(str(bdy), valid_day_list)
-                if day_list_valid != "Fail":
+                if day_list_valid != "Fail" and len(day_list_valid) <= 4:
                     user_acct_tbl_index.at[new_id, 'DAY_LIST'] = day_list_valid
                     user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] = 1
                     user_db.update_user_acct_table(user_acct_tbl_index)
                 else:
-                    response_var.message(f"Invalid response. Please ensure you are entering the day of the week with proper capitalization.")
+                    response_var.message(f"Invalid response. Please ensure you are entering the day of the week with proper capitalization. Up to four selections are allowed.")
             if user_acct_tbl_index.at[new_id, 'FIRST_NAME'] == "" and bdy_no_case != begin_no_case and bdy_no_case != config_str:
                 user_acct_tbl_index.at[new_id, 'FIRST_NAME'] = str(bdy)
                 user_db.update_user_acct_table(user_acct_tbl_index)
@@ -148,18 +148,13 @@ def incoming_sms():
                 unsub_str = "Unsub"
                 unsub_str = unsub_str.casefold()
                 if bdy_no_case == unsub_str:
-                    user_acct_tbl_index.at[new_id, 'HAS_DAY_LIST'] = 0
-                    user_acct_tbl_index.at[new_id, 'DAY_LIST'] = ""
-                    user_acct_tbl_index.at[new_id, 'HAS_COURSE_LIST'] = 0
-                    user_acct_tbl_index.at[new_id, 'COURSE_LIST'] = ""
-                    user_acct_tbl_index.at[new_id, 'ACTIVE'] = 0
-                    user_db.update_user_acct_table(user_acct_tbl_index)
-                    response_var.message('You are now unsubscribed. Respond with anything to re-subscribe.')
+                    user_db.user_unsub(new_id)
+                    response_var.message('You are now unsubscribed. Respond with "begin" to re-subscribe.')
         else:
             response_var.message('Invalid response. Please subscribe first.')
 
     response_and_check(body, phone_num, resp)
-
+    print(user_db.user_acct_tbl.to_string())
     return str(resp)
 
 
