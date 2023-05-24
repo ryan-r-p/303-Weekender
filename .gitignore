@@ -1,3 +1,5 @@
 # Ignoring the connection information for Twilio
 *.env
 .idea/
+test.py
+user_data.db
