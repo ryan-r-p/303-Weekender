@@ -1,12 +1,13 @@
-# 303-Weekender
+# 303-Weekender Beta
 
 #### Tee time notifications for high-handicappers only
+#### Text 'Begin' to (855) 643-7385 to start receiving notifications for tee times in the Denver Metro Area
 _______________
 
 This is a program designed to leverage the Twilio SMS API to send tee-time notifications for public golf courses in the Denver Metro Area. 
 The program acts as a time trigger, sending an SMS notification to a specified user when tee-times go live for booking on your selected days of the week.
-This was mostly designed so I can snag early morning times on Saturday and Sunday at different courses, and instead of scraping the site for times, it's so much easier just to send myself a reminder to look for the time when they are released online.
-Currently, there are 16 public courses that you can recieve notifications for:
+This was mostly designed so I can snag early morning times on Saturday and Sunday at different courses, and instead of scraping the sites for times, it's so much easier just to send myself a reminder to look for times when they are released online.
+Currently, there are 16 public courses that you can receive notifications for:
  
 - Aurora Golf Courses
 - Broken Tee
@@ -27,23 +28,22 @@ Currently, there are 16 public courses that you can recieve notifications for:
 
 (Looking for new suggestions)
 
+__________________________________
+#### Notification Engine (main.py)
 ___________________________________
-#### Twilio API
-___________________________________
-To make this app function, you will need to create an account on https://www.twilio.com/, buy a toll free number, and use the SID and authorization code provided within your code or environment variables. Currently, Twilio authorization in the program is loaded through environment variables in a .env file placed in the root directory:
 
-```
-from dotenv import load_dotenv
+The notification engine is run through main.py, which assesses the current time and sends SMS notifications at the target time based on the user's chosen courses and days of the week. To
+accomplish this, I leveraged the Twilio SMS API and arrow to create time-zone aware datetimes for use in the program. The notification engine runs through a series of functions designed to send the user a notification if one of the time triggers matches the current time within the program.
 
-load_dotenv('twilio.env')
-acct_sid = os.getenv('TWILIO_ACCOUNT_SID')
-auth_tkn = os.getenv('TWILIO_AUTH_TOKEN')
-from_phone = os.getenv('TWILIO_PHONE')
-```
+__________________________________
+#### Response Engine (flask_app.py)
+__________________________________
 
-This snippet can be changed to reflect your account information instead of utilizing environment variables:
-```
-acct_sid = 'your acct sid'
-auth_tkn = 'your account auth key'
-from_phone = 'your twilio phone num'
-```
+The response engine is run through flask_app.py, which is desgined to take user inputs through SMS texts and apply those inputs to a sqlite3 database within user_db.py. The Flask app acts as a webhook, connected to the Twilio SMS API through ngrok port forwarding on my local machine.
+After information is collected from the user and the subscription is active, the main.py script loops through the collected user data once per second in order to trigger a notification when tee times are released online.
+
+_________________________________
+#### Who cares how it works?
+_________________________________
+
+As long as it runs, amirite? Take it for a test drive by texting 'Begin' to (855) 643-7385, enter up to 4 days of the week that you would like a tee time for, then select up to 10 courses. You will receive an SMS notification when tee times go live at those specific courses for your chosen days.
